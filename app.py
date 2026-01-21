@@ -20,7 +20,7 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ------------------ Google Drive 設定 ------------------
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
+SCOPES = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_INFO = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
 
 creds = service_account.Credentials.from_service_account_info(
@@ -30,7 +30,7 @@ creds = service_account.Credentials.from_service_account_info(
 drive_service = build('drive', 'v3', credentials=creds)
 
 # words.json の FILE_ID
-FILE_ID = "ここにあなたの正しい FILE_ID を貼る"
+FILE_ID = "1uyNTAd4PFzalk0r2LAYaaDtPQWsUmkDv"
 
 # ------------------ JSON操作関数 ------------------
 def load_words():
