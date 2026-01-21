@@ -3,7 +3,10 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from openai import OpenAI
-import os
+import json, io, os
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 app = Flask(__name__)
 
@@ -14,6 +17,53 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+SERVICE_ACCOUNT_INFO = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+
+creds = service_account.Credentials.from_service_account_info(
+    SERVICE_ACCOUNT_INFO, scopes=SCOPES
+)
+
+drive_service = build('drive', 'v3', credentials=creds)
+
+
+FILE_ID = "1BiWgx87IBjvq6QRK8p734l-5PCiBwpHV"
+
+def load_words():
+    request = drive_service.files().get_media(fileId=FILE_ID)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+
+    done = False
+    while not done:
+        status, done = downloader.next_chunk()
+
+    fh.seek(0)
+    return json.load(fh)
+
+
+def save_word(new_word):
+    words = load_words()
+
+    if new_word.lower() not in [w.lower() for w in words]:
+        words.append(new_word)
+
+        data = json.dumps(words, ensure_ascii=False, indent=2)
+        media = MediaIoBaseUpload(
+            io.BytesIO(data.encode("utf-8")),
+            mimetype="application/json",
+            resumable=False
+        )
+
+        drive_service.files().update(
+            fileId=FILE_ID,
+            media_body=media
+        ).execute()
+
+
+
+
 
 
 @app.route("/webhook", methods=['POST'])
@@ -52,7 +102,8 @@ Word: "{word}"
         event.reply_token,
         TextSendMessage(text=reply)
     )
-
+    
+    save_word(word)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
