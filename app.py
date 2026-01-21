@@ -1,4 +1,3 @@
-#made by yuto matake
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -28,8 +27,7 @@ creds = service_account.Credentials.from_service_account_info(
 
 drive_service = build('drive', 'v3', credentials=creds)
 
-
-FILE_ID = "1MTMfNFdG-b0txF_1j8cFr5SFPtxjiS_8"
+FILE_ID = "1ucapKfA6rTDIbm5VQ_3O33Wmy7N32TJH"
 
 def load_words():
     request = drive_service.files().get_media(fileId=FILE_ID)
