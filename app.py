@@ -27,7 +27,7 @@ creds = service_account.Credentials.from_service_account_info(
 
 drive_service = build('drive', 'v3', credentials=creds)
 
-FILE_ID = "1ucapKfA6rTDIbm5VQ_3O33Wmy7N32TJH"
+FILE_ID = "1uyNTAd4PFzalk0r2LAYaaDtPQWsUmkDv"
 
 def load_words():
     request = drive_service.files().get_media(fileId=FILE_ID)
