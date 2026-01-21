@@ -99,7 +99,27 @@ def webhook():
 def handle_message(event):
     word = event.message.text.strip()
 
-    # 1. LINEに先に返信
+    # ------------------ "list" の場合 ------------------
+    if word.lower() == "list":
+        words = load_words()
+        if words:
+            # 1つのメッセージを最大10単語ずつに分割して送信
+            chunk_size = 10
+            for i in range(0, len(words), chunk_size):
+                chunk = words[i:i + chunk_size]
+                reply = "\n".join(chunk)
+                line_bot_api.push_message(
+                    event.source.user_id,
+                    TextSendMessage(text=reply)
+                )
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="No words saved yet.")
+            )
+        return  # ここで終了
+
+    # ------------------ 通常の単語処理 ------------------
     prompt = f"""
 You are an English dictionary tutor.
 Explain the meaning of this word in simple English and Japanese,
@@ -117,12 +137,13 @@ Word: "{word}"
         print("OpenAI API error:", e)
         reply = "Sorry, I couldn't process your word at the moment."
 
+    # LINE に返信
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply)
     )
 
-    # 2. Google Drive に単語を追加
+    # Google Drive に単語を保存
     save_word(word)
 
 # ------------------ Run ------------------
