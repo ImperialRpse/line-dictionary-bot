@@ -30,37 +30,35 @@ drive_service = build('drive', 'v3', credentials=creds)
 FILE_ID = "1uyNTAd4PFzalk0r2LAYaaDtPQWsUmkDv"
 
 def load_words():
-    request = drive_service.files().get_media(fileId=FILE_ID)
-    fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request)
-
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
-
-    fh.seek(0)
-    return json.load(fh)
-
+    try:
+        request = drive_service.files().get_media(fileId=FILE_ID)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        fh.seek(0)
+        data = json.load(fh)
+        if not isinstance(data, list):
+            data = []
+        return data
+    except Exception:
+        return []
 
 def save_word(new_word):
     words = load_words()
-
     if new_word.lower() not in [w.lower() for w in words]:
         words.append(new_word)
-
         data = json.dumps(words, ensure_ascii=False, indent=2)
         media = MediaIoBaseUpload(
             io.BytesIO(data.encode("utf-8")),
             mimetype="application/json",
             resumable=False
         )
-
         drive_service.files().update(
             fileId=FILE_ID,
             media_body=media
         ).execute()
-
-
 
 
 
