@@ -20,7 +20,7 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ------------------ Google Drive 設定 ------------------
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
 SERVICE_ACCOUNT_INFO = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
 
 creds = service_account.Credentials.from_service_account_info(
@@ -30,7 +30,7 @@ creds = service_account.Credentials.from_service_account_info(
 drive_service = build('drive', 'v3', credentials=creds)
 
 # words.json の FILE_ID
-FILE_ID = "1uyNTAd4PFzalk0r2LAYaaDtPQWsUmkDv"
+FILE_ID = "ここにあなたの正しい FILE_ID を貼る"
 
 # ------------------ JSON操作関数 ------------------
 def load_words():
@@ -103,4 +103,28 @@ def handle_message(event):
     prompt = f"""
 You are an English dictionary tutor.
 Explain the meaning of this word in simple English and Japanese,
-and make
+and make 3 short example sentences.
+
+Word: "{word}"
+"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        reply = response.choices[0].message.content
+    except Exception as e:
+        print("OpenAI API error:", e)
+        reply = "Sorry, I couldn't process your word at the moment."
+
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=reply)
+    )
+
+    # 2. Google Drive に単語を追加
+    save_word(word)
+
+# ------------------ Run ------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
